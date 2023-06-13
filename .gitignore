@@ -1,41 +1,43 @@
-# Compiled Lua sources
-luac.out
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+local hasTeleported = false
 
-# luarocks build files
-*.src.rock
-*.zip
-*.tar.gz
+local function findNearestBed()
+    local character = player.Character
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local beds = game.Workspace:GetDescendants()
 
-# Object files
-*.o
-*.os
-*.ko
-*.obj
-*.elf
+    local nearestBed = nil
+    local nearestDistance = math.huge
 
-# Precompiled Headers
-*.gch
-*.pch
+    for _, bed in ipairs(beds) do
+        if bed.Name:lower() == "bed" and bed:FindFirstChild("Covers") and bed.Covers.BrickColor ~= player.TeamColor then
+            local distance = (bed.Position - humanoidRootPart.Position).Magnitude
+            if distance < nearestDistance then
+                nearestBed = bed
+                nearestDistance = distance
+            end
+        end
+    end
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-*.def
-*.exp
+    return nearestBed
+end
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+local function tweenToNearestBed()
+    local nearestBed = findNearestBed()
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+    if nearestBed and not hasTeleported then
+        hasTeleported = true
 
+        local humanoidRootPart = player.Character:WaitForChild("HumanoidRootPart")
+        local targetPosition = nearestBed.Position + Vector3.new(0, 3, 0)
+
+        local tween = TweenService:Create(humanoidRootPart, TweenInfo.new(1), {CFrame = CFrame.new(targetPosition)})
+        tween:Play()
+
+        tween.Completed:Wait()
+        hasTeleported = false
+    end
+end
+
+tweenToNearestBed()
